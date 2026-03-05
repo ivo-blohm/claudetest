@@ -89,20 +89,16 @@
     const overlay = document.getElementById('overlay');
     const scoreEl = document.getElementById('score');
 
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const sounds = {
+      left:  new Audio('ping_left.wav'),
+      right: new Audio('ping_right.wav'),
+      wall:  new Audio('ping_wall.wav'),
+    };
 
-    function playPing(freq = 480) {
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(freq * 0.6, audioCtx.currentTime + 0.08);
-      gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
-      osc.start(audioCtx.currentTime);
-      osc.stop(audioCtx.currentTime + 0.12);
+    function playPing(name) {
+      const s = sounds[name];
+      s.currentTime = 0;
+      s.play().catch(() => {});
     }
 
     const W = canvas.width;
@@ -191,12 +187,12 @@
       if (g.ball.y - BALL_SIZE / 2 <= 0) {
         g.ball.y = BALL_SIZE / 2;
         g.ball.vy *= -1;
-        playPing(300);
+        playPing('wall');
       }
       if (g.ball.y + BALL_SIZE / 2 >= H) {
         g.ball.y = H - BALL_SIZE / 2;
         g.ball.vy *= -1;
-        playPing(300);
+        playPing('wall');
       }
 
       // Paddle collision helper
@@ -216,7 +212,7 @@
         g.ball.speed = Math.min(g.ball.speed + 0.3, 15);
         g.ball.vx = g.ball.speed * Math.cos(angle);
         g.ball.vy = g.ball.speed * Math.sin(angle);
-        playPing(480);
+        playPing('left');
       }
 
       if (hitPaddle(g.p2)) {
@@ -226,7 +222,7 @@
         g.ball.speed = Math.min(g.ball.speed + 0.3, 15);
         g.ball.vx = -g.ball.speed * Math.cos(angle);
         g.ball.vy = g.ball.speed * Math.sin(angle);
-        playPing(420);
+        playPing('right');
       }
 
       // Score
