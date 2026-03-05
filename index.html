@@ -280,11 +280,19 @@
       ctx.fillRect(g.p1.x, g.p1.y, PADDLE_W, PADDLE_H);
       ctx.fillRect(g.p2.x, g.p2.y, PADDLE_W, PADDLE_H);
 
-      // Ball
+      // Ball — color & glow based on speed (5 = white, 15 = deep red)
+      const t = Math.min((g.ball.speed - 5) / 10, 1); // 0..1
+      const r = 255;
+      const gr = Math.round(255 * (1 - t));
+      const b  = Math.round(255 * (1 - t));
+      const color = `rgb(${r},${gr},${b})`;
+      ctx.shadowColor = color;
+      ctx.shadowBlur  = 6 + t * 30;
       ctx.beginPath();
       ctx.arc(g.ball.x, g.ball.y, BALL_SIZE / 2, 0, Math.PI * 2);
-      ctx.fillStyle = '#fff';
+      ctx.fillStyle = color;
       ctx.fill();
+      ctx.shadowBlur = 0;
     }
 
     function loop() {
