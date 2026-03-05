@@ -287,7 +287,7 @@
       const b  = Math.round(255 * (1 - t));
       const color = `rgb(${r},${gr},${b})`;
       ctx.shadowColor = color;
-      ctx.shadowBlur  = 6 + t * 30;
+      ctx.shadowBlur  = 6 + t * 94;
       ctx.beginPath();
       ctx.arc(g.ball.x, g.ball.y, BALL_SIZE / 2, 0, Math.PI * 2);
       ctx.fillStyle = color;
