@@ -153,18 +153,18 @@
     function update() {
       const g = game;
 
-      // Move player paddle
-      if (keys['ArrowUp']) g.p1.y -= PADDLE_SPEED;
-      if (keys['ArrowDown']) g.p1.y += PADDLE_SPEED;
+      // AI paddle (left): only move when ball is heading towards it
+      if (g.ball.vx < 0) {
+        const target = g.ball.y - PADDLE_H / 2;
+        const diff = target - g.p1.y;
+        const aiSpeed = Math.min(Math.abs(diff), PADDLE_SPEED * 0.82);
+        g.p1.y += diff > 0 ? aiSpeed : -aiSpeed;
+      }
       clampPaddle(g.p1);
 
-      // AI paddle: only move when ball is heading towards it
-      if (g.ball.vx > 0) {
-        const target = g.ball.y - PADDLE_H / 2;
-        const diff = target - g.p2.y;
-        const aiSpeed = Math.min(Math.abs(diff), PADDLE_SPEED * 0.82);
-        g.p2.y += diff > 0 ? aiSpeed : -aiSpeed;
-      }
+      // Move player paddle (right)
+      if (keys['ArrowUp']) g.p2.y -= PADDLE_SPEED;
+      if (keys['ArrowDown']) g.p2.y += PADDLE_SPEED;
       clampPaddle(g.p2);
 
       // Move ball
