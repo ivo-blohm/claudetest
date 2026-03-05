@@ -89,6 +89,22 @@
     const overlay = document.getElementById('overlay');
     const scoreEl = document.getElementById('score');
 
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playPing(freq = 480) {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(freq * 0.6, audioCtx.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+      osc.start(audioCtx.currentTime);
+      osc.stop(audioCtx.currentTime + 0.12);
+    }
+
     const W = canvas.width;
     const H = canvas.height;
     const PADDLE_W = 12, PADDLE_H = 80, BALL_SIZE = 10;
@@ -175,10 +191,12 @@
       if (g.ball.y - BALL_SIZE / 2 <= 0) {
         g.ball.y = BALL_SIZE / 2;
         g.ball.vy *= -1;
+        playPing(300);
       }
       if (g.ball.y + BALL_SIZE / 2 >= H) {
         g.ball.y = H - BALL_SIZE / 2;
         g.ball.vy *= -1;
+        playPing(300);
       }
 
       // Paddle collision helper
@@ -198,6 +216,7 @@
         g.ball.speed = Math.min(g.ball.speed + 0.3, 15);
         g.ball.vx = g.ball.speed * Math.cos(angle);
         g.ball.vy = g.ball.speed * Math.sin(angle);
+        playPing(480);
       }
 
       if (hitPaddle(g.p2)) {
@@ -207,6 +226,7 @@
         g.ball.speed = Math.min(g.ball.speed + 0.3, 15);
         g.ball.vx = -g.ball.speed * Math.cos(angle);
         g.ball.vy = g.ball.speed * Math.sin(angle);
+        playPing(420);
       }
 
       // Score
