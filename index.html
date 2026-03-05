@@ -80,7 +80,7 @@
     </div>
   </div>
   <div id="info">
-    Spieler: W / S &nbsp;|&nbsp; Pause: Leertaste
+    Spieler: ↑ / ↓ &nbsp;|&nbsp; Pause: Leertaste
   </div>
 
   <script>
@@ -124,8 +124,9 @@
     document.addEventListener('keydown', e => {
       keys[e.code] = true;
 
+      if (['Space', 'ArrowUp', 'ArrowDown'].includes(e.code)) e.preventDefault();
+
       if (e.code === 'Space') {
-        e.preventDefault();
         if (!game) {
           game = newGame();
           game.running = true;
@@ -153,8 +154,8 @@
       const g = game;
 
       // Move player paddle
-      if (keys['KeyW']) g.p1.y -= PADDLE_SPEED;
-      if (keys['KeyS']) g.p1.y += PADDLE_SPEED;
+      if (keys['ArrowUp']) g.p1.y -= PADDLE_SPEED;
+      if (keys['ArrowDown']) g.p1.y += PADDLE_SPEED;
       clampPaddle(g.p1);
 
       // AI paddle: only move when ball is heading towards it
