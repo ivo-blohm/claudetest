@@ -80,7 +80,7 @@
     </div>
   </div>
   <div id="info">
-    Spieler 1: W / S &nbsp;|&nbsp; Spieler 2: ↑ / ↓ &nbsp;|&nbsp; Pause: Leertaste
+    Spieler: W / S &nbsp;|&nbsp; Pause: Leertaste
   </div>
 
   <script>
@@ -152,12 +152,18 @@
     function update() {
       const g = game;
 
-      // Move paddles
+      // Move player paddle
       if (keys['KeyW']) g.p1.y -= PADDLE_SPEED;
       if (keys['KeyS']) g.p1.y += PADDLE_SPEED;
-      if (keys['ArrowUp']) g.p2.y -= PADDLE_SPEED;
-      if (keys['ArrowDown']) g.p2.y += PADDLE_SPEED;
       clampPaddle(g.p1);
+
+      // AI paddle: only move when ball is heading towards it
+      if (g.ball.vx > 0) {
+        const target = g.ball.y - PADDLE_H / 2;
+        const diff = target - g.p2.y;
+        const aiSpeed = Math.min(Math.abs(diff), PADDLE_SPEED * 0.82);
+        g.p2.y += diff > 0 ? aiSpeed : -aiSpeed;
+      }
       clampPaddle(g.p2);
 
       // Move ball
@@ -220,8 +226,9 @@
         g.running = false;
         g.winner = scorer;
         overlay.classList.remove('hidden');
+        const winner = scorer === 1 ? 'Du gewinnst!' : 'Computer gewinnt!';
         overlay.innerHTML = `
-          <h2>Spieler ${scorer} gewinnt!</h2>
+          <h2>${winner}</h2>
           <p>Drücke <strong>LEERTASTE</strong> für ein neues Spiel</p>
         `;
       } else {
