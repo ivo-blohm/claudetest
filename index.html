@@ -93,6 +93,8 @@
       left:  new Audio('ping_left.wav'),
       right: new Audio('ping_right.wav'),
       wall:  new Audio('ping_wall.wav'),
+      cheer: new Audio('cheer.wav'),
+      fail:  new Audio('fail.wav'),
     };
 
     function playPing(name) {
@@ -228,9 +230,11 @@
       // Score
       if (g.ball.x < 0) {
         g.p2.score++;
+        playPing('cheer');
         checkWin(g, 2);
       } else if (g.ball.x > W) {
         g.p1.score++;
+        playPing('fail');
         checkWin(g, 1);
       }
 
@@ -243,7 +247,7 @@
         g.running = false;
         g.winner = scorer;
         overlay.classList.remove('hidden');
-        const winner = scorer === 1 ? 'Du gewinnst!' : 'Computer gewinnt!';
+        const winner = scorer === 2 ? 'YOU WIN' : 'YOU LOSE';
         overlay.innerHTML = `
           <h2>${winner}</h2>
           <p>Drücke <strong>LEERTASTE</strong> für ein neues Spiel</p>
