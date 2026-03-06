@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tesla Börsenpreis</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #161b22;
+      border-bottom: 1px solid #30363d;
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .logo svg {
+      width: 36px;
+      height: 36px;
+      fill: #e22d28;
+    }
+
+    .logo h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #e6edf3;
+    }
+
+    .logo span {
+      color: #8b949e;
+      font-size: 0.85rem;
+    }
+
+    .main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+    }
+
+    .stat-card .label {
+      font-size: 0.75rem;
+      color: #8b949e;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.4rem;
+    }
+
+    .stat-card .value {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #e6edf3;
+    }
+
+    .stat-card .value.up {
+      color: #3fb950;
+    }
+
+    .stat-card .value.down {
+      color: #f85149;
+    }
+
+    .chart-card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .chart-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #e6edf3;
+    }
+
+    .tab-group {
+      display: flex;
+      gap: 0.4rem;
+    }
+
+    .tab-btn {
+      background: #21262d;
+      border: 1px solid #30363d;
+      color: #8b949e;
+      padding: 0.3rem 0.75rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.15s;
+    }
+
+    .tab-btn.active,
+    .tab-btn:hover {
+      background: #e22d28;
+      border-color: #e22d28;
+      color: #fff;
+    }
+
+    .chart-container {
+      position: relative;
+      height: 340px;
+    }
+
+    .volume-container {
+      position: relative;
+      height: 120px;
+    }
+
+    #loading {
+      text-align: center;
+      padding: 4rem;
+      color: #8b949e;
+      font-size: 0.95rem;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      border: 3px solid #30363d;
+      border-top-color: #e22d28;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 0.5rem;
+      vertical-align: middle;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    #error {
+      display: none;
+      background: #1a0a0a;
+      border: 1px solid #f85149;
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      color: #f85149;
+      margin-bottom: 1rem;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem;
+      color: #8b949e;
+      font-size: 0.8rem;
+      border-top: 1px solid #21262d;
+      margin-top: 2rem;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <svg viewBox="0 0 342 35" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0 .1a9.7 9.7 0 0 0 7 7h11l.5.1v27.6h6.8V7.3L26 7h11a9.8 9.8 0 0 0 7-7H0zm238.6 0h-6.8v34.8H263a9.7 9.7 0 0 0 7-7h-31.3V.1zm-52.3 6.8c3.6-1 6.6-3.8 7.4-6.9l-38.1.1v7h30.7zm-5.2 13.5h-25.5v7h19.3c-.3 3.5-3 6.2-7.4 7.1l6.6 6.5c7.1-2.4 12.5-8.4 12.5-16.3 0-.9-.1-2.9-.5-4.3zm-68.3-13.5v7h19.8v7h-19.8v7h19.8v7.1h-19.8v7h26.5V.1l-26.5.3zm232.1-.1h-3.2v7h3.2c3.8 0 5.5 1.4 5.5 5.8 0 4-1.7 5.8-5.5 5.8h-3.2v7h3.2c7.7 0 12.3-4.1 12.3-12.8 0-8.7-4.6-12.8-12.3-12.8zm-86.5 0h-6.8v34.8h6.8V.1zm-29.4 7h11l.5.1v27.6h6.8V7.3l.5-.1h11a9.8 9.8 0 0 0 7-7H224a9.7 9.7 0 0 0 7 7z"/>
+    </svg>
+    <div>
+      <h1>TSLA</h1>
+      <span>Tesla, Inc. · NASDAQ</span>
+    </div>
+  </div>
+  <div id="live-price" style="font-size:1.6rem;font-weight:700;color:#3fb950"></div>
+</header>
+
+<div class="main">
+  <div id="error"></div>
+  <div id="loading"><span class="spinner"></span>Lade Börsendaten…</div>
+
+  <div id="content" style="display:none">
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="label">Aktuell</div>
+        <div class="value" id="s-current">–</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Tageshoch</div>
+        <div class="value" id="s-high">–</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Tagestief</div>
+        <div class="value" id="s-low">–</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Eröffnung</div>
+        <div class="value" id="s-open">–</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">6M Veränderung</div>
+        <div class="value" id="s-change">–</div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">Schlusskurs (6 Monate)</div>
+        <div class="tab-group">
+          <button class="tab-btn active" data-type="close">Schluss</button>
+          <button class="tab-btn" data-type="open">Eröffnung</button>
+          <button class="tab-btn" data-type="high">Hoch</button>
+          <button class="tab-btn" data-type="low">Tief</button>
+        </div>
+      </div>
+      <div class="chart-container">
+        <canvas id="priceChart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">Handelsvolumen</div>
+      </div>
+      <div class="volume-container">
+        <canvas id="volumeChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>Daten via Yahoo Finance · Aktualisiert beim Laden der Seite</footer>
+
+<script>
+  let stockData = null;
+  let priceChart = null;
+
+  const LABELS = {
+    close: "Schlusskurs",
+    open:  "Eröffnungskurs",
+    high:  "Tageshoch",
+    low:   "Tagestief",
+  };
+
+  async function fetchData() {
+    try {
+      const res = await fetch("/api/tesla");
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      stockData = await res.json();
+      renderApp();
+    } catch (e) {
+      document.getElementById("loading").style.display = "none";
+      const err = document.getElementById("error");
+      err.style.display = "block";
+      err.textContent = "Fehler beim Laden der Daten: " + e.message;
+    }
+  }
+
+  function fmt(n) {
+    return "$" + n.toFixed(2);
+  }
+
+  function renderApp() {
+    document.getElementById("loading").style.display = "none";
+    document.getElementById("content").style.display = "block";
+
+    const d = stockData;
+    const last = d.close[d.close.length - 1];
+    const first = d.close[0];
+    const change = ((last - first) / first * 100).toFixed(2);
+    const todayHigh = d.high[d.high.length - 1];
+    const todayLow  = d.low[d.low.length - 1];
+    const todayOpen = d.open[d.open.length - 1];
+
+    document.getElementById("live-price").textContent = fmt(d.current_price);
+    document.getElementById("s-current").textContent  = fmt(d.current_price);
+    document.getElementById("s-high").textContent     = fmt(todayHigh);
+    document.getElementById("s-low").textContent      = fmt(todayLow);
+    document.getElementById("s-open").textContent     = fmt(todayOpen);
+
+    const changeEl = document.getElementById("s-change");
+    changeEl.textContent = (change > 0 ? "+" : "") + change + "%";
+    changeEl.className   = "value " + (change >= 0 ? "up" : "down");
+
+    buildPriceChart("close");
+    buildVolumeChart();
+
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        const type = btn.dataset.type;
+        document.querySelector(".chart-title").textContent =
+          LABELS[type] + " (6 Monate)";
+        updatePriceChart(type);
+      });
+    });
+  }
+
+  function buildPriceChart(type) {
+    const ctx = document.getElementById("priceChart").getContext("2d");
+    const values = stockData[type];
+    const isUp = values[values.length - 1] >= values[0];
+    const color = isUp ? "#3fb950" : "#f85149";
+
+    const gradient = ctx.createLinearGradient(0, 0, 0, 340);
+    gradient.addColorStop(0, isUp ? "rgba(63,185,80,0.3)" : "rgba(248,81,73,0.3)");
+    gradient.addColorStop(1, "rgba(0,0,0,0)");
+
+    priceChart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: stockData.dates,
+        datasets: [{
+          label: LABELS[type],
+          data: values,
+          borderColor: color,
+          backgroundColor: gradient,
+          borderWidth: 2,
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          fill: true,
+          tension: 0.1,
+        }]
+      },
+      options: chartOptions("$", color),
+    });
+  }
+
+  function updatePriceChart(type) {
+    if (!priceChart) return;
+    const values = stockData[type];
+    const isUp = values[values.length - 1] >= values[0];
+    const color = isUp ? "#3fb950" : "#f85149";
+
+    const ctx = document.getElementById("priceChart").getContext("2d");
+    const gradient = ctx.createLinearGradient(0, 0, 0, 340);
+    gradient.addColorStop(0, isUp ? "rgba(63,185,80,0.3)" : "rgba(248,81,73,0.3)");
+    gradient.addColorStop(1, "rgba(0,0,0,0)");
+
+    priceChart.data.datasets[0].data = values;
+    priceChart.data.datasets[0].label = LABELS[type];
+    priceChart.data.datasets[0].borderColor = color;
+    priceChart.data.datasets[0].backgroundColor = gradient;
+    priceChart.update();
+  }
+
+  function buildVolumeChart() {
+    const ctx = document.getElementById("volumeChart").getContext("2d");
+    new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: stockData.dates,
+        datasets: [{
+          label: "Volumen",
+          data: stockData.volume,
+          backgroundColor: "rgba(56, 139, 253, 0.5)",
+          borderColor: "rgba(56,139,253,0.8)",
+          borderWidth: 1,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => "Vol: " + (ctx.raw / 1_000_000).toFixed(1) + "M"
+            }
+          }
+        },
+        scales: {
+          x: {
+            type: "time",
+            time: { unit: "month", displayFormats: { month: "MMM yyyy" } },
+            ticks: { color: "#8b949e", maxTicksLimit: 6 },
+            grid: { color: "#21262d" },
+          },
+          y: {
+            ticks: {
+              color: "#8b949e",
+              callback: v => (v / 1_000_000).toFixed(0) + "M"
+            },
+            grid: { color: "#21262d" },
+          }
+        }
+      }
+    });
+  }
+
+  function chartOptions(prefix, color) {
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "#1c2128",
+          borderColor: "#30363d",
+          borderWidth: 1,
+          titleColor: "#8b949e",
+          bodyColor: "#e6edf3",
+          callbacks: {
+            label: ctx => LABELS[ctx.dataset.label] || ctx.dataset.label
+              ? " " + prefix + ctx.raw.toFixed(2)
+              : ctx.formattedValue
+          }
+        }
+      },
+      scales: {
+        x: {
+          type: "time",
+          time: { unit: "month", displayFormats: { month: "MMM yyyy" } },
+          ticks: { color: "#8b949e", maxTicksLimit: 6 },
+          grid: { color: "#21262d" },
+        },
+        y: {
+          ticks: {
+            color: "#8b949e",
+            callback: v => prefix + v.toFixed(0)
+          },
+          grid: { color: "#21262d" },
+        }
+      }
+    };
+  }
+
+  fetchData();
+</script>
+</body>
+</html>
